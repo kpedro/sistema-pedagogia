@@ -1,0 +1,9 @@
+node_modules
+.next
+uploads
+backups
+prisma/dev.db
+prisma/dev_shadow.db
+.env
+npm-debug.log*
+.DS_Store

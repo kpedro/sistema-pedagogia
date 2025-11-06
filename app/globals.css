@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}
+
+.dark body {
+  @apply bg-slate-900 text-slate-100;
+}
+
+a {
+  @apply text-brand underline-offset-2;
+}
+
+kbd {
+  @apply rounded bg-slate-200 px-1 text-xs font-medium text-slate-600;
+}
+
+table {
+  @apply w-full border-collapse;
+}
+
+thead {
+  @apply bg-slate-100 text-xs uppercase tracking-wide text-slate-600;
+}
+
+tbody tr {
+  @apply border-b border-slate-200;
+}
+
+input, textarea, select {
+  @apply rounded-xl border-slate-300 shadow-sm focus:border-brand focus:ring-brand;
+}

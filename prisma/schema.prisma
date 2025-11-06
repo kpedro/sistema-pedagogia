@@ -1,0 +1,685 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id                 String            @id @default(cuid())
+  name               String
+  code               String            @unique
+  shortName          String?
+  cnpj               String?           @unique
+  timezone           String            @default("America/Manaus")
+  themePrimary       String?
+  themeSecondary     String?
+  address            String?
+  phone              String?
+  email              String?
+  isActive           Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  memberships        UserSchool[]
+  classes            Class[]
+  students           Student[]
+  subjects           Subject[]
+  teacherAssignments TeacherAssignment[]
+  occurrenceCatalog  OccurrenceCatalog[]
+  occurrences        Occurrence[]
+  interventions      Intervention[]
+  templates          Template[]
+  documents          Document[]
+  resources          Resource[]
+  bookings           Booking[]
+  timetables         Timetable[]
+  events             Event[]
+  attachments        Attachment[]
+  auditLogs          AuditLog[]
+  riskRules          RiskRuleConfig[]
+  riskAlerts         RiskAlert[]
+  contentNotes       ContentNote[]
+  mediaAssets        MediaAsset[]
+  contentDeliveries  ContentDelivery[]
+  csvImports         CsvImportLog[]
+  studentMetrics     StudentMetric[]
+
+  @@index([name])
+}
+
+model User {
+  id                    String                @id @default(cuid())
+  email                 String                @unique
+  name                  String
+  passwordHash          String
+  role                  String                @default("PROFESSOR")
+  phone                 String?
+  avatarUrl             String?
+  totpSecret            String?
+  totpEnabled           Boolean               @default(false)
+  totpBackupCodes       String?
+  lastLoginAt           DateTime?
+  isActive              Boolean               @default(true)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  memberships           UserSchool[]
+  teacherAssignments    TeacherAssignment[]
+  occurrencesCreated    Occurrence[]          @relation("OccurrenceCreatedBy")
+  interventionsCreated  Intervention[]        @relation("InterventionCreatedBy")
+  interventionsAssigned Intervention[]        @relation("InterventionAssignee")
+  documentsCreated      Document[]            @relation("DocumentCreatedBy")
+  documentsApproved     Document[]            @relation("DocumentApprovedBy")
+  documentRevisions     DocumentRevision[]
+  auditLogs             AuditLog[]
+  riskAlertsOwned       RiskAlert[]           @relation("RiskAlertOwner")
+  mediaAssets           MediaAsset[]
+  contentNotes          ContentNote[]
+  csvImports            CsvImportLog[]
+  homeroomClasses       Class[]               @relation("ClassHomeroomTeacher")
+  bookingsCreated       Booking[]             @relation("BookingCreatedBy")
+  bookingOverrides      Booking[]             @relation("BookingOverrideBy")
+  timetablesTeaching    Timetable[]
+  eventsOwned           Event[]
+  templatesCreated      Template[]            @relation("TemplateCreator")
+  attachmentsUploaded   Attachment[]          @relation("AttachmentUploader")
+  riskRulesCreated      RiskRuleConfig[]      @relation("RiskRuleCreator")
+
+  @@index([role])
+}
+
+model UserSchool {
+  id        String   @id @default(cuid())
+  userId    String
+  schoolId  String
+  role      String
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, schoolId])
+  @@index([schoolId, role])
+}
+
+model Class {
+  id                String    @id @default(cuid())
+  schoolId          String
+  name              String
+  code              String?
+  year              Int
+  grade             String
+  shift             String
+  capacity          Int?
+  homeroomTeacherId String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  school          School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  homeroomTeacher User?  @relation("ClassHomeroomTeacher", fields: [homeroomTeacherId], references: [id])
+
+  students           Student[]
+  timetables         Timetable[]
+  teacherAssignments TeacherAssignment[]
+  occurrences        Occurrence[]
+  interventions      Intervention[]
+  bookings           Booking[]
+
+  @@unique([schoolId, name])
+  @@index([schoolId, year])
+}
+
+model Student {
+  id             String   @id @default(cuid())
+  schoolId       String
+  classId        String?
+  name           String
+  registration   String   @unique
+  birthDate      DateTime?
+  gender         String?
+  enrollmentDate DateTime?
+  status         String   @default("ACTIVE")
+  contactEmail   String?
+  contactPhone   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  school        School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  class         Class?        @relation(fields: [classId], references: [id])
+  guardians     StudentGuardian[]
+  occurrences   Occurrence[]
+  interventions Intervention[]
+  riskAlerts    RiskAlert[]
+  metrics       StudentMetric[]
+}
+
+model Guardian {
+  id        String   @id @default(cuid())
+  name      String
+  relation  String
+  email     String?
+  phone     String?
+  document  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students StudentGuardian[]
+}
+
+model StudentGuardian {
+  id         String  @id @default(cuid())
+  studentId  String
+  guardianId String
+  isPrimary  Boolean @default(false)
+
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, guardianId])
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  schoolId  String
+  code      String
+  name      String
+  workload  Int?
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school      School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  assignments TeacherAssignment[]
+  timetables  Timetable[]
+
+  @@unique([schoolId, code])
+}
+
+model TeacherAssignment {
+  id        String   @id @default(cuid())
+  schoolId  String
+  classId   String
+  subjectId String
+  teacherId String
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher User    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, subjectId, teacherId])
+  @@index([teacherId])
+}
+
+model Occurrence {
+  id             String   @id @default(cuid())
+  schoolId       String
+  studentId      String
+  classId        String?
+  createdById    String
+  category       String
+  subtype        String
+  severity       Int
+  status         String   @default("OPEN")
+  isConfidential Boolean  @default(false)
+  description    String
+  actionsTaken   String?
+  happenedAt     DateTime
+  metadata       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  school     School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class      Class?  @relation(fields: [classId], references: [id])
+  createdBy  User    @relation("OccurrenceCreatedBy", fields: [createdById], references: [id])
+  attachments   Attachment[]
+  interventions OccurrenceIntervention[]
+
+  @@index([schoolId, createdAt])
+  @@index([schoolId, severity])
+  @@index([studentId, happenedAt])
+}
+
+model OccurrenceCatalog {
+  id                  String  @id @default(cuid())
+  schoolId            String?
+  category            String
+  subtype             String
+  defaultSeverity     Int
+  defaultConfidential Boolean  @default(false)
+  description         String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  @@unique([schoolId, category, subtype])
+}
+
+model OccurrenceIntervention {
+  occurrenceId   String
+  interventionId String
+
+  occurrence   Occurrence   @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@id([occurrenceId, interventionId])
+}
+
+model Intervention {
+  id           String   @id @default(cuid())
+  schoolId     String
+  studentId    String
+  classId      String?
+  createdById  String
+  assignedToId String?
+  status       String   @default("OPEN")
+  title        String
+  summary      String?
+  plan         String?
+  followUpAt   DateTime?
+  completedAt  DateTime?
+  metadata     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school       School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class        Class? @relation(fields: [classId], references: [id])
+  createdBy    User   @relation("InterventionCreatedBy", fields: [createdById], references: [id])
+  assignedTo   User?  @relation("InterventionAssignee", fields: [assignedToId], references: [id])
+  occurrences  OccurrenceIntervention[]
+  attachments  Attachment[]
+  riskAlert    RiskAlert?
+
+  @@index([schoolId, status])
+  @@index([studentId, status])
+}
+
+model Template {
+  id           String   @id @default(cuid())
+  schoolId     String?
+  code         String
+  title        String
+  type         String
+  version      Int      @default(1)
+  status       String   @default("ACTIVE")
+  changelog    String?
+  html         String
+  placeholders String?
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school    School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  createdBy User?  @relation("TemplateCreator", fields: [createdById], references: [id])
+  documents Document[]
+
+  @@unique([schoolId, code, version])
+}
+
+model Document {
+  id                String   @id @default(cuid())
+  schoolId          String
+  templateId        String?
+  createdById       String
+  approvedById      String?
+  status            String   @default("DRAFT")
+  type              String
+  title             String
+  number            String?  @unique
+  provisionalNumber String?
+  version           Int      @default(1)
+  content           String
+  metadata          String?
+  reservedUntil     DateTime?
+  approvedAt        DateTime?
+  archivedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  school     School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  template   Template? @relation(fields: [templateId], references: [id])
+  createdBy  User      @relation("DocumentCreatedBy", fields: [createdById], references: [id])
+  approvedBy User?     @relation("DocumentApprovedBy", fields: [approvedById], references: [id])
+  revisions  DocumentRevision[]
+  attachments Attachment[]
+
+  @@index([schoolId, status, createdAt])
+}
+
+model DocumentRevision {
+  id          String   @id @default(cuid())
+  documentId  String
+  version     Int
+  status      String
+  content     String
+  changelog   String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  document  Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy User     @relation(fields: [createdById], references: [id])
+
+  @@unique([documentId, version])
+}
+
+model Resource {
+  id        String   @id @default(cuid())
+  schoolId  String
+  name      String
+  type      String
+  capacity  Int?
+  location  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school     School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  bookings   Booking[]
+  timetables Timetable[]
+  attachments Attachment[]
+
+  @@unique([schoolId, name])
+}
+
+model Booking {
+  id                String   @id @default(cuid())
+  schoolId          String
+  resourceId        String?
+  classId           String?
+  eventId           String?
+  createdById       String
+  type              String
+  priority          Int      @default(3)
+  status            String   @default("CONFIRMED")
+  title             String
+  description       String?
+  startsAt          DateTime
+  endsAt            DateTime
+  conflictWithId    String?
+  overrideReason    String?
+  overrideById      String?
+  overrideExpiresAt DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  resource    Resource? @relation(fields: [resourceId], references: [id])
+  class       Class?   @relation(fields: [classId], references: [id])
+  event       Event?   @relation(fields: [eventId], references: [id])
+  createdBy   User     @relation("BookingCreatedBy", fields: [createdById], references: [id])
+  overrideBy  User?    @relation("BookingOverrideBy", fields: [overrideById], references: [id])
+  conflictWith Booking? @relation("BookingConflict", fields: [conflictWithId], references: [id])
+  conflicts    Booking[] @relation("BookingConflict")
+
+  @@index([schoolId, startsAt])
+  @@index([resourceId, startsAt])
+}
+
+model Timetable {
+  id         String   @id @default(cuid())
+  schoolId   String
+  classId    String
+  subjectId  String
+  teacherId  String
+  resourceId String?
+  weekday    Int
+  startsAt   String
+  endsAt     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  class    Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject  Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher  User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  resource Resource? @relation(fields: [resourceId], references: [id])
+
+  @@index([schoolId, weekday])
+  @@unique([classId, weekday, startsAt])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  schoolId    String
+  title       String
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime
+  location    String?
+  status      String   @default("PLANNED")
+  ownerId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school  School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  owner   User?  @relation(fields: [ownerId], references: [id])
+  scripts EventScript[]
+  bookings Booking[]
+  attachments Attachment[]
+
+  @@index([schoolId, startsAt])
+}
+
+model EventScript {
+  id        String   @id @default(cuid())
+  eventId   String
+  order     Int
+  title     String
+  detail    String?
+  owner     String?
+  duration  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, order])
+}
+
+model Attachment {
+  id             String   @id @default(cuid())
+  schoolId       String
+  occurrenceId   String?
+  interventionId String?
+  documentId     String?
+  eventId        String?
+  resourceId     String?
+  uploadedById   String?
+  fileName       String
+  path           String
+  mimeType       String
+  size           Int
+  metadata       String?
+  createdAt      DateTime @default(now())
+
+  school       School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  occurrence   Occurrence?   @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  intervention Intervention? @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  document     Document?     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  event        Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  resource     Resource?     @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  uploadedBy   User?         @relation("AttachmentUploader", fields: [uploadedById], references: [id])
+
+  @@index([schoolId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  schoolId  String
+  action    String
+  actorId   String?
+  target    String?
+  summary   String
+  payload   String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actor  User?  @relation(fields: [actorId], references: [id])
+
+  @@index([schoolId, createdAt])
+}
+
+model RiskRuleConfig {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  isActive    Boolean  @default(true)
+  definition  String
+  schedule    String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school    School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdBy User?  @relation("RiskRuleCreator", fields: [createdById], references: [id])
+  alerts    RiskAlert[]
+
+  @@unique([schoolId, name])
+}
+
+model RiskAlert {
+  id               String   @id @default(cuid())
+  schoolId         String
+  studentId        String
+  ruleId           String
+  interventionId   String?  @unique
+  status           String   @default("OPEN")
+  severity         Int      @default(3)
+  summary          String
+  details          String?
+  acknowledgedById String?
+  acknowledgedAt   DateTime?
+  resolvedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  school         School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  rule           RiskRuleConfig @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  intervention   Intervention?  @relation(fields: [interventionId], references: [id])
+  acknowledgedBy User?          @relation("RiskAlertOwner", fields: [acknowledgedById], references: [id])
+
+  @@index([schoolId, status])
+  @@index([studentId, status])
+}
+
+model StudentMetric {
+  id              String   @id @default(cuid())
+  schoolId        String
+  studentId       String
+  period          String
+  average         Float?
+  attendance      Float?
+  severeOccurs30d Int      @default(0)
+  lastComputedAt  DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, period])
+  @@index([schoolId, period])
+}
+
+model ContentNote {
+  id           String   @id @default(cuid())
+  schoolId     String
+  title        String
+  slug         String
+  status       String   @default("DRAFT")
+  markdown     String
+  html         String?
+  authorId     String?
+  tags         String?
+  publishedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school    School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  author    User?          @relation(fields: [authorId], references: [id])
+  metrics   ContentMetric?
+  deliveries ContentDelivery[]
+
+  @@unique([schoolId, slug])
+}
+
+model ContentMetric {
+  id         String      @id @default(cuid())
+  noteId     String      @unique
+  opens      Int         @default(0)
+  clicks     Int         @default(0)
+  lastSentAt DateTime?
+
+  note ContentNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+}
+
+model MediaAsset {
+  id             String   @id @default(cuid())
+  schoolId       String
+  uploaderId     String?
+  type           String
+  status         String   @default("QUEUED")
+  title          String
+  description    String?
+  sourcePath     String
+  outputPath     String?
+  durationSec    Int?
+  sizeBytes      Int
+  transcriptPath String?
+  transcriptLang String?
+  meta           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  uploader User?  @relation(fields: [uploaderId], references: [id])
+  deliveries ContentDelivery[]
+}
+
+model ContentDelivery {
+  id        String   @id @default(cuid())
+  schoolId  String
+  noteId    String?
+  mediaId   String?
+  channel   String
+  recipient String
+  status    String   @default("PENDING")
+  sentAt    DateTime?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  school School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  note   ContentNote? @relation(fields: [noteId], references: [id])
+  media  MediaAsset?  @relation(fields: [mediaId], references: [id])
+}
+
+model CsvImportLog {
+  id             String   @id @default(cuid())
+  schoolId       String
+  userId         String?
+  type           String
+  fileName       String?
+  rowCount       Int      @default(0)
+  processedCount Int      @default(0)
+  errorCount     Int      @default(0)
+  log            String?
+  createdAt      DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([schoolId, createdAt])
+}
