@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import htmlDocx from "html-docx-js/dist/html-docx";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -20,6 +19,11 @@ export async function GET(
     return NextResponse.json({ error: "Documento nao encontrado" }, { status: 404 });
   }
 
+  const htmlDocxModule = await import("html-docx-js/build/api.js");
+  const htmlDocx = (htmlDocxModule.default ?? htmlDocxModule) as {
+    asBlob: (html: string, options?: unknown) => Buffer;
+  };
+
   const html = `
     <article>
       <header>
@@ -36,7 +40,7 @@ export async function GET(
     </article>
   `;
 
-  const buffer = htmlDocx.asBuffer(html);
+  const buffer = htmlDocx.asBlob(html);
 
   return new NextResponse(buffer, {
     status: 200,
