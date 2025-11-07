@@ -24,7 +24,7 @@ export async function renderDocumentPdf({ html, header, footer }: PdfPayload): P
     ? {
         args: chromium.args,
         executablePath: await chromium.executablePath(),
-        headless: chromium.headless
+        headless: chromium.headless ?? true
       }
     : {
         headless: true,
