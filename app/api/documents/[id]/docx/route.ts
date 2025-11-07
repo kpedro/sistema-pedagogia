@@ -40,10 +40,14 @@ export async function GET(
     </article>
   `;
 
-  const buffer = htmlDocx.asBlob(html);
-  const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+  const blobOrBuffer = htmlDocx.asBlob(html);
+  const maybeBlob = blobOrBuffer as unknown;
+  const body =
+    maybeBlob && typeof (maybeBlob as Blob).arrayBuffer === "function"
+      ? await (maybeBlob as Blob).arrayBuffer()
+      : (blobOrBuffer as BodyInit);
 
-  return new NextResponse(arrayBuffer, {
+  return new NextResponse(body, {
     status: 200,
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
