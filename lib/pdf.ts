@@ -1,16 +1,5 @@
 import chromium from "@sparticuz/chromium";
-import type { PuppeteerLaunchOptions } from "puppeteer-core";
-
-type PuppeteerModule = typeof import("puppeteer-core");
-
-async function resolvePuppeteer(): Promise<PuppeteerModule> {
-  if (process.env.VERCEL || process.env.AWS_REGION) {
-    const mod = await import("puppeteer-core");
-    return mod.default ?? mod;
-  }
-  const mod = await import("puppeteer");
-  return mod.default ?? mod;
-}
+import puppeteer, { type PuppeteerLaunchOptions } from "puppeteer-core";
 
 export type PdfPayload = {
   html: string;
