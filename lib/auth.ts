@@ -100,16 +100,25 @@ export const authOptions: NextAuthOptions = {
           })
         ]);
 
+        const schools = user.memberships.map((m) => ({
+          schoolId: m.schoolId,
+          role: m.role as UserRole,
+          schoolName: m.school?.shortName ?? m.school?.name ?? m.schoolId,
+          schoolCode: m.school?.code ?? undefined,
+          isPrimary: m.isPrimary
+        }));
+
+        const currentSchoolName =
+          membership.school?.shortName ?? membership.school?.name ?? membership.schoolId;
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: membership.role as UserRole,
           schoolId: membership.schoolId,
-          schools: user.memberships.map((m) => ({
-            schoolId: m.schoolId,
-            role: m.role as UserRole
-          }))
+          schoolName: currentSchoolName,
+          schools
         };
       }
     })
@@ -122,11 +131,19 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.role = user.role;
         token.schoolId = (user as any).schoolId;
+         token.schoolName = (user as any).schoolName;
         token.schools = (user as any).schools ?? [];
       }
 
       if (trigger === "update" && session?.schoolId) {
-        token.schoolId = session.schoolId as string;
+        const nextSchoolId = session.schoolId as string;
+        token.schoolId = nextSchoolId;
+        const memberships = Array.isArray(token.schools) ? (token.schools as any[]) : [];
+        const target = memberships.find((membership) => membership.schoolId === nextSchoolId);
+        if (target) {
+          token.role = target.role as UserRole;
+          token.schoolName = target.schoolName ?? target.schoolCode ?? target.schoolId;
+        }
       }
 
       return token;
@@ -138,8 +155,15 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name as string;
         session.user.role = token.role as UserRole;
         session.user.schoolId = token.schoolId as string;
+        session.user.schoolName = token.schoolName as string | undefined;
         session.user.schools =
-          (token.schools as Array<{ schoolId: string; role: UserRole }>) ?? [];
+          (token.schools as Array<{
+            schoolId: string;
+            role: UserRole;
+            schoolName?: string;
+            schoolCode?: string;
+            isPrimary?: boolean;
+          }>) ?? [];
       }
       return session;
     }

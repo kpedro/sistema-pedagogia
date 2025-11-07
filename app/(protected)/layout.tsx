@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import ShortcutListener from "@/components/shortcut-listener";
 import { cn } from "@/lib/utils";
+import { SchoolSwitcher } from "@/components/school-switcher";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -35,10 +36,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div>
             <h1 className="text-lg font-semibold text-slate-800">
-              Sistema Pedagogia • {session.user.schools.find((s) => s.schoolId === session.user.schoolId)?.role}
+              Sistema Pedagogia • {session.user.role}
             </h1>
             <p className="text-xs text-slate-500">
-              {session.user.email} • Escola ativa: {session.user.schoolId}
+              {session.user.email} • Escola ativa: {session.user.schoolName ?? session.user.schoolId}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -49,6 +50,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
                 </Link>
               ))}
             </div>
+            <SchoolSwitcher />
             <ThemeSwitcher />
           </div>
         </div>

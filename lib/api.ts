@@ -2,13 +2,22 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import type { UserRole } from "@/constants/enums";
 
+export type UserMembership = {
+  schoolId: string;
+  role: UserRole;
+  schoolName?: string;
+  schoolCode?: string;
+  isPrimary?: boolean;
+};
+
 export type AuthUser = {
   id: string;
   email: string;
   name: string;
   role: UserRole;
   schoolId: string;
-  schools: Array<{ schoolId: string; role: UserRole }>;
+  schoolName?: string;
+  schools: UserMembership[];
 };
 
 export async function requireUser(
@@ -32,6 +41,7 @@ export async function requireUser(
     name: token.name as string,
     role: token.role as UserRole,
     schoolId: token.schoolId as string,
+    schoolName: token.schoolName as string | undefined,
     schools: (token.schools as AuthUser["schools"]) ?? []
   };
 

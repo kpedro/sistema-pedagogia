@@ -26,6 +26,16 @@ export default function LoginPage() {
     resolver: zodResolver(schema)
   });
 
+  const toRelativePath = (url?: string | null) => {
+    if (!url) return callbackUrl;
+    try {
+      const parsed = new URL(url, window.location.origin);
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    } catch {
+      return callbackUrl;
+    }
+  };
+
   const onSubmit = async (values: FormData) => {
     setError(null);
     setIsSubmitting(true);
@@ -41,7 +51,7 @@ export default function LoginPage() {
         return;
       }
 
-      const targetUrl = result?.url ?? callbackUrl;
+      const targetUrl = toRelativePath(result?.url ?? callbackUrl);
       router.replace(targetUrl);
     } catch (err) {
       console.error("Erro ao autenticar", err);
