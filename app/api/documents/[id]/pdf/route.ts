@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { renderDocumentPdf } from "@/lib/pdf";
 
+export const runtime = "nodejs";
+
 export async function GET(
   _req: Request,
   { params }: { params: { id: string } }

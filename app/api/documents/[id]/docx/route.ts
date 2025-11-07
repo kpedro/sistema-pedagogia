@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import htmlDocx from "html-docx-js/dist/html-docx";
 import { prisma } from "@/lib/prisma";
 
+export const runtime = "nodejs";
+
 export async function GET(
   _req: Request,
   { params }: { params: { id: string } }
