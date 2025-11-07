@@ -1,5 +1,6 @@
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
+type PuppeteerLaunchOptions = Parameters<typeof puppeteer.launch>[0];
 
 export type PdfPayload = {
   html: string;
