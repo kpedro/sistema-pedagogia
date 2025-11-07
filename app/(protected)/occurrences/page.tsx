@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card } from "@/components/ui/card";
+import { fetchReferenceData } from "@/lib/client/reference";
 
 const schema = z.object({
   studentId: z.string().min(1, "Informe o estudante"),
@@ -45,6 +46,10 @@ export default function OccurrencesPage() {
     queryKey: ["occurrences"],
     queryFn: fetchOccurrences
   });
+  const reference = useQuery({
+    queryKey: ["reference"],
+    queryFn: fetchReferenceData
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -52,6 +57,9 @@ export default function OccurrencesPage() {
       happenedAt: new Date().toISOString().slice(0, 16)
     }
   });
+
+  const students = reference.data?.students ?? [];
+  const classes = reference.data?.classes ?? [];
 
   const onSubmit = async (values: FormData) => {
     setError(null);
@@ -78,7 +86,7 @@ export default function OccurrencesPage() {
           <div>
             <h2 className="text-lg font-semibold text-slate-700">Registrar ocorrência</h2>
             <p className="text-sm text-slate-500">
-              Use IDs de estudantes/turmas conforme cadastro atual. TODO Fase2: autocomplete amigável.
+              Escolha o estudante/turma da lista (dados carregados automaticamente do cadastro base).
             </p>
           </div>
           <button
@@ -91,18 +99,30 @@ export default function OccurrencesPage() {
         </div>
         <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
           <label className="text-sm font-medium text-slate-600">
-            Estudante ID
-            <input
-              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
-              {...form.register("studentId")}
-            />
+            Estudante
+            <select className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("studentId")}>
+              <option value="">Selecione um estudante</option>
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.name} • {student.registration}
+                  {student.className ? ` (${student.className})` : ""}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-slate-400">
+              {reference.isLoading ? "Carregando alunos..." : `Total disponíveis: ${students.length}`}
+            </span>
           </label>
           <label className="text-sm font-medium text-slate-600">
-            Turma ID
-            <input
-              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
-              {...form.register("classId")}
-            />
+            Turma (opcional)
+            <select className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("classId")}>
+              <option value="">Selecione</option>
+              {classes.map((cls) => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.name} • {cls.grade ?? ""} {cls.shift ? `(${cls.shift})` : ""}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-medium text-slate-600">
             Categoria

@@ -52,7 +52,7 @@ const OCCURRENCE_CATALOG: Array<{
     subtype: "Conflito entre estudantes",
     defaultSeverity: 3,
     defaultConfidential: true,
-    description: "Discussoes ou agressões verbais/fisicas."
+    description: "Discussoes ou agressÃµes verbais/fisicas."
   },
   {
     category: OCCURRENCE_CATEGORY.PEDAGOGICA,
@@ -85,6 +85,106 @@ const SUBJECTS = [
   { code: "GEO", name: "Geografia", color: "#16a34a" }
 ];
 
+const CLASS_SETS: Record<
+  string,
+  Array<{ code: string; name: string; grade: string; shift: string; year: number }>
+> = {
+  EETI_RBC: [
+    { code: "1A", name: "1Âº ano A", grade: "1Âº EM", shift: "MATUTINO", year: 2025 },
+    { code: "2B", name: "2Âº ano B", grade: "2Âº EM", shift: "VESPERTINO", year: 2025 }
+  ],
+  EE_GBS: [
+    { code: "7A", name: "7Âº ano A", grade: "7Âº EF", shift: "MATUTINO", year: 2025 },
+    { code: "9C", name: "9Âº ano C", grade: "9Âº EF", shift: "VESPERTINO", year: 2025 }
+  ]
+};
+
+type GuardianSeed = {
+  name: string;
+  relation: string;
+  email?: string;
+  phone?: string;
+  isPrimary?: boolean;
+};
+
+type StudentSeed = {
+  name: string;
+  registration: string;
+  classCode?: string;
+  birthDate?: string;
+  gender?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  guardians?: GuardianSeed[];
+};
+
+const STUDENT_SETS: Record<string, StudentSeed[]> = {
+  EETI_RBC: [
+    {
+      name: "Ana Beatriz Souza",
+      registration: "EETI-RBC-2025-001",
+      classCode: "1A",
+      birthDate: "2010-03-12",
+      gender: "F",
+      contactEmail: "ana.souza@familia.com",
+      contactPhone: "+55 92 99999-1101",
+      guardians: [
+        { name: "Marcia Souza", relation: "MAE", email: "marcia@familia.com", phone: "+55 92 99999-1100", isPrimary: true }
+      ]
+    },
+    {
+      name: "Rafael Pereira",
+      registration: "EETI-RBC-2025-002",
+      classCode: "1A",
+      birthDate: "2009-11-05",
+      gender: "M",
+      contactPhone: "+55 92 98888-2212",
+      guardians: [
+        { name: "Carlos Pereira", relation: "PAI", phone: "+55 92 98888-2211", isPrimary: true },
+        { name: "Luciana Pereira", relation: "MAE", phone: "+55 92 98888-2213" }
+      ]
+    },
+    {
+      name: "Luiza Carvalho",
+      registration: "EETI-RBC-2025-003",
+      classCode: "2B",
+      birthDate: "2008-07-19",
+      gender: "F",
+      contactEmail: "luiza.carvalho@familia.com",
+      guardians: [{ name: "Renata Carvalho", relation: "RESPONSAVEL", email: "renata.carvalho@mail.com", isPrimary: true }]
+    }
+  ],
+  EE_GBS: [
+    {
+      name: "Miguel Andrade",
+      registration: "EE-GBS-2025-101",
+      classCode: "7A",
+      birthDate: "2012-01-22",
+      gender: "M",
+      guardians: [
+        { name: "Paula Andrade", relation: "MAE", phone: "+55 92 97777-3000", isPrimary: true },
+        { name: "Roberto Andrade", relation: "PAI", phone: "+55 92 97777-3001" }
+      ]
+    },
+    {
+      name: "Helena Torres",
+      registration: "EE-GBS-2025-102",
+      classCode: "7A",
+      birthDate: "2011-08-03",
+      gender: "F",
+      contactEmail: "helena.torres@familia.com",
+      guardians: [{ name: "Juliana Torres", relation: "MAE", email: "juliana.torres@mail.com", isPrimary: true }]
+    },
+    {
+      name: "Caio Mendes",
+      registration: "EE-GBS-2025-103",
+      classCode: "9C",
+      birthDate: "2010-04-14",
+      gender: "M",
+      guardians: [{ name: "Fernanda Mendes", relation: "RESPONSAVEL", phone: "+55 92 96666-4411", isPrimary: true }]
+    }
+  ]
+};
 const TEMPLATES = [
   {
     code: "RO",
@@ -94,11 +194,11 @@ const TEMPLATES = [
     html: `<section>
   <header>
     <h1>{{doc.titulo}}</h1>
-    <p>Documento nº {{doc.numero}} • {{data}} {{hora}}</p>
-    <p>{{escola.nome}} — {{escola.endereco}}</p>
+    <p>Documento nÂº {{doc.numero}} Â• {{data}} {{hora}}</p>
+    <p>{{escola.nome}} Â— {{escola.endereco}}</p>
   </header>
   <article>
-    <p>Aluno(a): {{aluno.nome}} ({{aluno.matricula}}) — Turma {{turma.nome}}</p>
+    <p>Aluno(a): {{aluno.nome}} ({{aluno.matricula}}) Â— Turma {{turma.nome}}</p>
     <p>Responsavel: {{responsavel.nome}} ({{responsavel.relacao}})</p>
     <div class="conteudo">{{url}}</div>
   </article>
@@ -115,7 +215,7 @@ const TEMPLATES = [
     html: `<article>
   <header>
     <h1>{{doc.titulo}}</h1>
-    <p>Nº {{doc.numero}} • {{escola.nome}} • {{data}} as {{hora}}</p>
+    <p>NÂº {{doc.numero}} Â• {{escola.nome}} Â• {{data}} as {{hora}}</p>
   </header>
   <section class="corpo">
     <p>Participantes: {{usuario.nome}}</p>
@@ -133,8 +233,8 @@ const TEMPLATES = [
     title: "Oficio",
     changelog: "Versao inicial MVP",
     html: `<div>
-  <p>{{escola.nome}} — {{escola.endereco}}</p>
-  <p>Oficio nº {{doc.numero}}</p>
+  <p>{{escola.nome}} Â— {{escola.endereco}}</p>
+  <p>Oficio nÂº {{doc.numero}}</p>
   <p>{{data}}</p>
   <div>{{url}}</div>
   <p>Atenciosamente, {{usuario.nome}}</p>
@@ -147,9 +247,9 @@ const TEMPLATES = [
     changelog: "Versao inicial MVP",
     html: `<section>
   <header>
-    <p>{{escola.sigla}} • {{doc.numero}}</p>
+    <p>{{escola.sigla}} Â• {{doc.numero}}</p>
     <h1>{{doc.titulo}}</h1>
-    <p>Disciplina: {{disciplina.sigla}} • Turma: {{turma.nome}}</p>
+    <p>Disciplina: {{disciplina.sigla}} Â• Turma: {{turma.nome}}</p>
   </header>
   <article>{{url}}</article>
   <footer>{{assinatura}}</footer>
@@ -163,7 +263,7 @@ const TEMPLATES = [
     html: `<section>
   <header>
     <h1>{{doc.titulo}}</h1>
-    <p>{{escola.nome}} • {{data}}</p>
+    <p>{{escola.nome}} Â• {{data}}</p>
   </header>
   <article>{{url}}</article>
   <footer>{{assinatura}}</footer>
@@ -292,6 +392,118 @@ async function main() {
       role: USER_ROLE.GESTOR
     }
   });
+
+  const classMap: Record<string, Record<string, { id: string }>> = {};
+
+  for (const [schoolCode, classList] of Object.entries(CLASS_SETS)) {
+    const school = schoolMap[schoolCode];
+    if (!school) continue;
+    classMap[schoolCode] = {};
+
+    for (const cls of classList) {
+      const storedClass = await prisma.class.upsert({
+        where: {
+          schoolId_name: {
+            schoolId: school.id,
+            name: cls.name
+          }
+        },
+        update: {
+          code: cls.code,
+          grade: cls.grade,
+          shift: cls.shift,
+          year: cls.year
+        },
+        create: {
+          schoolId: school.id,
+          code: cls.code,
+          name: cls.name,
+          grade: cls.grade,
+          shift: cls.shift,
+          year: cls.year
+        }
+      });
+
+      classMap[schoolCode][cls.code] = { id: storedClass.id };
+    }
+  }
+
+  for (const [schoolCode, students] of Object.entries(STUDENT_SETS)) {
+    const school = schoolMap[schoolCode];
+    if (!school) continue;
+
+    for (const student of students) {
+      const classId = student.classCode ? classMap[schoolCode]?.[student.classCode]?.id ?? null : null;
+
+      const storedStudent = await prisma.student.upsert({
+        where: { registration: student.registration },
+        update: {
+          name: student.name,
+          classId,
+          birthDate: student.birthDate ? new Date(student.birthDate) : undefined,
+          gender: student.gender,
+          contactEmail: student.contactEmail,
+          contactPhone: student.contactPhone
+        },
+        create: {
+          schoolId: school.id,
+          classId,
+          name: student.name,
+          registration: student.registration,
+          birthDate: student.birthDate ? new Date(student.birthDate) : undefined,
+          gender: student.gender,
+          enrollmentDate: new Date(),
+          contactEmail: student.contactEmail,
+          contactPhone: student.contactPhone
+        }
+      });
+
+      for (const guardianData of student.guardians ?? []) {
+        let guardian = await prisma.guardian.findFirst({
+          where: {
+            name: guardianData.name,
+            relation: guardianData.relation
+          }
+        });
+
+        if (!guardian) {
+          guardian = await prisma.guardian.create({
+            data: {
+              name: guardianData.name,
+              relation: guardianData.relation,
+              email: guardianData.email,
+              phone: guardianData.phone
+            }
+          });
+        } else {
+          guardian = await prisma.guardian.update({
+            where: { id: guardian.id },
+            data: {
+              email: guardianData.email ?? guardian.email,
+              phone: guardianData.phone ?? guardian.phone
+            }
+          });
+        }
+
+        await prisma.studentGuardian.upsert({
+          where: {
+            studentId_guardianId: {
+              studentId: storedStudent.id,
+              guardianId: guardian.id
+            }
+          },
+          update: {
+            isPrimary: guardianData.isPrimary ?? false
+          },
+          create: {
+            studentId: storedStudent.id,
+            guardianId: guardian.id,
+            isPrimary: guardianData.isPrimary ?? false
+          }
+        });
+      }
+    }
+  }
 
   for (const catalogItem of OCCURRENCE_CATALOG) {
     const existingCatalog = await prisma.occurrenceCatalog.findFirst({

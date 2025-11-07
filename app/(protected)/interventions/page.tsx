@@ -6,6 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { fetchReferenceData } from "@/lib/client/reference";
 
 const schema = z.object({
   studentId: z.string().min(1),
@@ -38,10 +39,17 @@ export default function InterventionsPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const { data } = useQuery({ queryKey: ["interventions"], queryFn: fetchInterventions });
+  const reference = useQuery({
+    queryKey: ["reference"],
+    queryFn: fetchReferenceData
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema)
   });
+
+  const students = reference.data?.students ?? [];
+  const classes = reference.data?.classes ?? [];
 
   const onSubmit = async (values: FormData) => {
     setError(null);
@@ -72,12 +80,27 @@ export default function InterventionsPage() {
 
         <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
           <label className="text-sm font-medium text-slate-600">
-            Estudante ID
-            <input className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("studentId")} />
+            Estudante
+            <select className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("studentId")}>
+              <option value="">Selecione um estudante</option>
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.name} • {student.registration}
+                  {student.className ? ` (${student.className})` : ""}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-medium text-slate-600">
-            Turma ID
-            <input className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("classId")} />
+            Turma (opcional)
+            <select className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("classId")}>
+              <option value="">Selecione</option>
+              {classes.map((cls) => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.name} • {cls.grade ?? ""} {cls.shift ? `(${cls.shift})` : ""}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="md:col-span-2 text-sm font-medium text-slate-600">
             Título

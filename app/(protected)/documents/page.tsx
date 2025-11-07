@@ -6,6 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { fetchReferenceData } from "@/lib/client/reference";
 
 const schema = z.object({
   templateId: z.string().optional(),
@@ -37,6 +38,10 @@ export default function DocumentsPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const documents = useQuery({ queryKey: ["documents"], queryFn: fetchDocuments });
+  const reference = useQuery({
+    queryKey: ["reference"],
+    queryFn: fetchReferenceData
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -45,6 +50,8 @@ export default function DocumentsPage() {
       content: "<p>Conteúdo inicial do documento...</p>"
     }
   });
+
+  const templates = reference.data?.templates ?? [];
 
   const onSubmit = async (values: FormData) => {
     setError(null);
@@ -85,7 +92,15 @@ export default function DocumentsPage() {
         <form className="mt-4 grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
           <label className="text-sm font-medium text-slate-600">
             Modelo (opcional)
-            <input className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("templateId")} />
+            <select className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("templateId")}>
+              <option value="">Sem modelo</option>
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.title} • {template.code ?? template.type}
+                  {template.schoolId ? "" : " (global)"}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-medium text-slate-600">
             Tipo
