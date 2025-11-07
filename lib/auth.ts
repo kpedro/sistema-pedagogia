@@ -14,7 +14,7 @@ const credentialsSchema = z.object({
   schoolId: z.string().optional()
 });
 
-const ROLE_TOTP_REQUIRED = new Set<UserRole>([USER_ROLE.ADMIN, USER_ROLE.PEDAGOGO]);
+const ROLE_TOTP_REQUIRED = new Set<UserRole>([]);
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
