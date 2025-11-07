@@ -1,9 +1,9 @@
-ï»¿import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "../lib/prisma";
 import bcrypt from "bcryptjs";
 import speakeasy from "speakeasy";
 import { USER_ROLE, OCCURRENCE_CATEGORY, type OccurrenceCategory } from "../constants/enums";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 const SCHOOLS = [
   {
@@ -52,7 +52,7 @@ const OCCURRENCE_CATALOG: Array<{
     subtype: "Conflito entre estudantes",
     defaultSeverity: 3,
     defaultConfidential: true,
-    description: "Discussoes ou agressÃµes verbais/fisicas."
+    description: "Discussoes ou agressões verbais/fisicas."
   },
   {
     category: OCCURRENCE_CATEGORY.PEDAGOGICA,
@@ -94,11 +94,11 @@ const TEMPLATES = [
     html: `<section>
   <header>
     <h1>{{doc.titulo}}</h1>
-    <p>Documento nÂº {{doc.numero}} â€¢ {{data}} {{hora}}</p>
-    <p>{{escola.nome}} â€” {{escola.endereco}}</p>
+    <p>Documento nº {{doc.numero}} • {{data}} {{hora}}</p>
+    <p>{{escola.nome}} — {{escola.endereco}}</p>
   </header>
   <article>
-    <p>Aluno(a): {{aluno.nome}} ({{aluno.matricula}}) â€” Turma {{turma.nome}}</p>
+    <p>Aluno(a): {{aluno.nome}} ({{aluno.matricula}}) — Turma {{turma.nome}}</p>
     <p>Responsavel: {{responsavel.nome}} ({{responsavel.relacao}})</p>
     <div class="conteudo">{{url}}</div>
   </article>
@@ -115,7 +115,7 @@ const TEMPLATES = [
     html: `<article>
   <header>
     <h1>{{doc.titulo}}</h1>
-    <p>NÂº {{doc.numero}} â€¢ {{escola.nome}} â€¢ {{data}} as {{hora}}</p>
+    <p>Nº {{doc.numero}} • {{escola.nome}} • {{data}} as {{hora}}</p>
   </header>
   <section class="corpo">
     <p>Participantes: {{usuario.nome}}</p>
@@ -133,8 +133,8 @@ const TEMPLATES = [
     title: "Oficio",
     changelog: "Versao inicial MVP",
     html: `<div>
-  <p>{{escola.nome}} â€” {{escola.endereco}}</p>
-  <p>Oficio nÂº {{doc.numero}}</p>
+  <p>{{escola.nome}} — {{escola.endereco}}</p>
+  <p>Oficio nº {{doc.numero}}</p>
   <p>{{data}}</p>
   <div>{{url}}</div>
   <p>Atenciosamente, {{usuario.nome}}</p>
@@ -147,9 +147,9 @@ const TEMPLATES = [
     changelog: "Versao inicial MVP",
     html: `<section>
   <header>
-    <p>{{escola.sigla}} â€¢ {{doc.numero}}</p>
+    <p>{{escola.sigla}} • {{doc.numero}}</p>
     <h1>{{doc.titulo}}</h1>
-    <p>Disciplina: {{disciplina.sigla}} â€¢ Turma: {{turma.nome}}</p>
+    <p>Disciplina: {{disciplina.sigla}} • Turma: {{turma.nome}}</p>
   </header>
   <article>{{url}}</article>
   <footer>{{assinatura}}</footer>
@@ -163,7 +163,7 @@ const TEMPLATES = [
     html: `<section>
   <header>
     <h1>{{doc.titulo}}</h1>
-    <p>{{escola.nome}} â€¢ {{data}}</p>
+    <p>{{escola.nome}} • {{data}}</p>
   </header>
   <article>{{url}}</article>
   <footer>{{assinatura}}</footer>

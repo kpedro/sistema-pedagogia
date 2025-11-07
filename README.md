@@ -54,6 +54,35 @@ MVP funcional com Next.js (App Router), Prisma/SQLite, NextAuth (Credentials + 2
 5. Defina `NEXTAUTH_URL=https://seu-dominio.br`.
 6. Rode `vercel deploy` (opcional) ou faça deploy automático por branch main.
 
+### Banco remoto (Turso/libSQL)
+
+- Instale o CLI `turso` e faça login (`turso auth signup/login`).
+- Crie dois bancos (principal e shadow):  
+  ```bash
+  turso db create sistema-pedagogia-prod
+  turso db create sistema-pedagogia-shadow
+  ```
+- Para cada banco, gere um token e copie a URL `libsql://...`:  
+  ```bash
+  turso db show <nome> --url
+  turso db tokens create <nome>
+  ```
+- Configure as variáveis na Vercel (e use-as ao rodar migrações):  
+  ```
+  DATABASE_URL=libsql://sistema-pedagogia-prod.turso.io?authToken=seu-token
+  SHADOW_DATABASE_URL=libsql://sistema-pedagogia-shadow.turso.io?authToken=seu-token-shadow
+  ```
+- Rode as migrações/seed apontando para o banco remoto:  
+  ```bash
+  DATABASE_URL="libsql://...prod...?authToken=..." \
+  SHADOW_DATABASE_URL="libsql://...shadow...?authToken=..." \
+  npx prisma migrate deploy
+
+  DATABASE_URL="libsql://...prod...?authToken=..." \
+  npm run seed
+  ```
+- Ajuste `NEXTAUTH_URL`/`APP_BASE_URL` para o domínio público antes do redeploy.
+
 ## DNS Registro.br → Vercel
 
 1. No Registro.br, adicione registros CNAME conforme instruções do Vercel (`www` → `cname.vercel-dns.com`).
