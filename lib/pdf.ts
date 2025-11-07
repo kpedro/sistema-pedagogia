@@ -23,7 +23,6 @@ export async function renderDocumentPdf({ html, header, footer }: PdfPayload): P
   const launchOptions: PuppeteerLaunchOptions = isServerless
     ? {
         args: chromium.args,
-        defaultViewport: chromium.defaultViewport ?? undefined,
         executablePath: await chromium.executablePath(),
         headless: chromium.headless
       }
