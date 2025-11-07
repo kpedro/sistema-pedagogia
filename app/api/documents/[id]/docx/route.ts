@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import PizZip from "pizzip";
-import Docxtemplater from "docxtemplater";
+import htmlDocx from "html-docx-js/dist/html-docx";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -9,33 +8,35 @@ export async function GET(
 ) {
   const document = await prisma.document.findUnique({
     where: { id: params.id },
-    include: { school: true }
+    include: {
+      school: true,
+      createdBy: { select: { name: true } }
+    }
   });
 
   if (!document) {
     return NextResponse.json({ error: "Documento nao encontrado" }, { status: 404 });
   }
 
-  const zip = new PizZip();
-  const doc = new Docxtemplater(zip);
+  const html = `
+    <article>
+      <header>
+        <h1>${document.title}</h1>
+        <p>${document.school.name}</p>
+        <p>Nº ${document.number ?? document.provisionalNumber ?? "--"} - ${new Date(document.createdAt).toLocaleString(
+          "pt-BR"
+        )}</p>
+      </header>
+      ${document.content}
+      <footer style="margin-top:16px;">
+        <p>Responsável: ${document.createdBy?.name ?? ""}</p>
+      </footer>
+    </article>
+  `;
 
-  doc.setData({
-    titulo: document.title,
-    numero: document.number ?? document.provisionalNumber ?? "--",
-    escola: document.school.name,
-    conteudo: document.content
-  });
+  const buffer = htmlDocx.asBuffer(html);
 
-  try {
-    doc.render();
-  } catch (error) {
-    console.error("Erro ao gerar DOCX", error);
-    return NextResponse.json({ error: "Falha ao gerar DOCX" }, { status: 500 });
-  }
-
-  const arrayBuffer = doc.getZip().generate({ type: "arraybuffer" });
-
-  return new NextResponse(arrayBuffer, {
+  return new NextResponse(buffer, {
     status: 200,
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

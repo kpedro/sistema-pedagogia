@@ -1,4 +1,16 @@
-import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import type { PuppeteerLaunchOptions } from "puppeteer-core";
+
+type PuppeteerModule = typeof import("puppeteer-core");
+
+async function resolvePuppeteer(): Promise<PuppeteerModule> {
+  if (process.env.VERCEL || process.env.AWS_REGION) {
+    const mod = await import("puppeteer-core");
+    return mod.default ?? mod;
+  }
+  const mod = await import("puppeteer");
+  return mod.default ?? mod;
+}
 
 export type PdfPayload = {
   html: string;
@@ -17,15 +29,21 @@ const DEFAULT_FOOTER = `<div style="width:100%;font-size:10px;font-family:'Noto 
 </div>`;
 
 export async function renderDocumentPdf({ html, header, footer }: PdfPayload): Promise<ArrayBuffer> {
-  const launchOptions: Parameters<typeof puppeteer.launch>[0] = {
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  };
+  const isServerless = Boolean(process.env.VERCEL || process.env.AWS_REGION);
+  const launchOptions: PuppeteerLaunchOptions = isServerless
+    ? {
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless
+      }
+    : {
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH
+      };
 
-  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-    launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-  }
-
+  const puppeteer = await resolvePuppeteer();
   const browser = await puppeteer.launch(launchOptions);
   const page = await browser.newPage();
 
