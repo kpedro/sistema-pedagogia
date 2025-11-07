@@ -1,5 +1,5 @@
 import chromium from "@sparticuz/chromium";
-import puppeteer, { type PuppeteerLaunchOptions } from "puppeteer-core";
+import puppeteer from "puppeteer-core";
 
 export type PdfPayload = {
   html: string;
