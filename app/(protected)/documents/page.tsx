@@ -85,7 +85,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="print-hidden">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-700">Novo documento</h2>
@@ -144,7 +144,7 @@ export default function DocumentsPage() {
         <OficioBuilder />
       </section>
 
-      <Card>
+      <Card className="print-hidden">
         <h2 className="text-lg font-semibold text-slate-700">Documentos</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">
