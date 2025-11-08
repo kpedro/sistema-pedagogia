@@ -439,7 +439,7 @@ export default function DocumentPrintStudio() {
         <div className="mt-6">{renderForm()}</div>
       </Card>
 
-      <Card>
+      <Card className="print-surface">
         {renderPreview()}
         <p className="print-hidden pt-4 text-center text-xs text-slate-500">
           Utilize o botao &quot;Imprimir / PDF&quot; para salvar este documento com margens otimizadas.
