@@ -411,7 +411,7 @@ input, textarea, select {
   }
 
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
   }
 
   .print-hidden {
@@ -425,13 +425,14 @@ input, textarea, select {
 
   .print-surface,
   .print-surface * {
-    visibility: visible;
+    visibility: visible !important;
   }
 
   .print-surface {
     position: relative;
     inset: 0;
     margin: 0 auto;
+    page-break-after: avoid;
   }
 
   .app-shell__content {
