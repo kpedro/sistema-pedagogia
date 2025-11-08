@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { fetchReferenceData } from "@/lib/client/reference";
+import OficioBuilder from "@/components/oficio-builder";
 
 const schema = z.object({
   templateId: z.string().optional(),
@@ -85,10 +86,17 @@ export default function DocumentsPage() {
   return (
     <div className="space-y-6">
       <Card>
-        <h2 className="text-lg font-semibold text-slate-700">Novo documento</h2>
-        <p className="text-sm text-slate-500">
-          Número é reservado automaticamente no rascunho. Ao aprovar, gera numeração definitiva e PDF.
-        </p>
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-700">Novo documento</h2>
+            <p className="text-sm text-slate-500">
+              Numero e reservado automaticamente no rascunho. Ao aprovar, gera numeracao definitiva e PDF.
+            </p>
+          </div>
+          <a className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700" href="#oficio-builder">
+            Gerar oficio padronizado
+          </a>
+        </div>
         <form className="mt-4 grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
           <label className="text-sm font-medium text-slate-600">
             Modelo (opcional)
@@ -131,6 +139,10 @@ export default function DocumentsPage() {
           </div>
         </form>
       </Card>
+
+      <section id="oficio-builder">
+        <OficioBuilder />
+      </section>
 
       <Card>
         <h2 className="text-lg font-semibold text-slate-700">Documentos</h2>
@@ -198,3 +210,4 @@ export default function DocumentsPage() {
     </div>
   );
 }
+
