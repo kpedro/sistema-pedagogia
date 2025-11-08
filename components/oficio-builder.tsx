@@ -404,7 +404,7 @@ export default function DocumentPrintStudio() {
   };
 
   return (
-    <div className="space-y-6" id="oficio-builder">
+    <div className="space-y-6 print-zone" id="oficio-builder">
       <Card className="print-hidden">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
