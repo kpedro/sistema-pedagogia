@@ -41,7 +41,7 @@ input, textarea, select {
 
 .oficio {
   position: relative;
-  max-width: 160mm;
+  max-width: 210mm;
   margin: 0 auto;
   background: #ffffff;
   color: #0f172a;
@@ -51,7 +51,6 @@ input, textarea, select {
   font-family: "Times New Roman", Georgia, serif;
   line-height: 1.65;
   overflow: hidden;
-  min-height: 247mm;
 }
 
 .oficio--timbrado {
@@ -306,7 +305,7 @@ input, textarea, select {
 
 .doc-sheet {
   position: relative;
-  max-width: 160mm;
+  max-width: 210mm;
   margin: 0 auto;
   background: #ffffff;
   color: #0f172a;
@@ -316,7 +315,6 @@ input, textarea, select {
   box-shadow: 0 25px 60px rgba(15, 23, 42, 0.08);
   font-family: "Times New Roman", Georgia, serif;
   line-height: 1.6;
-  min-height: 247mm;
 }
 
 .doc-sheet__header {
@@ -411,7 +409,8 @@ input, textarea, select {
     box-shadow: none;
     padding: 0;
     width: 100%;
-    min-height: 247mm;
+    max-width: 100%;
+    margin: 0;
   }
 
   .doc-sheet {
@@ -419,7 +418,8 @@ input, textarea, select {
     box-shadow: none;
     padding: 0;
     width: 100%;
-    min-height: 247mm;
+    max-width: 100%;
+    margin: 0;
   }
 
   body * {
@@ -464,6 +464,7 @@ input, textarea, select {
     padding: 0 !important;
     margin: 0 !important;
     width: 100%;
+    display: block;
   }
 
   .app-shell__content {
