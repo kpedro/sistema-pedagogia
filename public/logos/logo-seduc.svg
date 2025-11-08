@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80">
+  <rect width="220" height="80" rx="16" fill="#fbbf24" />
+  <text x="110" y="45" fill="#713f12" font-size="30" text-anchor="middle" font-family="Arial" font-weight="700">SEDUC</text>
+  <text x="110" y="65" fill="#78350f" font-size="16" text-anchor="middle" font-family="Arial">Educação e Desporto</text>
+</svg>
