@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,34 +17,29 @@ const schema = z.object({
   description: z.string().min(5),
   actionsTaken: z.string().optional(),
   happenedAt: z.string().min(1),
-  isConfidential: z.boolean().optional(),
-  documentLink: z
-    .string()
-    .trim()
-    .optional()
-    .refine((value) => !value || value.startsWith("http"), {
-      message: "Informe uma URL iniciando com http(s) ou deixe em branco"
-    })
+  isConfidential: z.boolean().optional()
 });
 
 type FormData = z.infer<typeof schema>;
 
+type OccurrenceRow = {
+  id: string;
+  category: string;
+  subtype: string;
+  severity: number;
+  status: string;
+  happenedAt: string;
+  student: { name: string } | null;
+  createdBy: { name: string } | null;
+  sheetUrl?: string;
+};
+
+const SHEET_FALLBACK_URL = process.env.NEXT_PUBLIC_OCCURRENCE_SHEET_URL ?? null;
+
 async function fetchOccurrences() {
   const res = await fetch("/api/occurrences");
-  if (!res.ok) throw new Error("Erro ao carregar ocorrÃªncias");
-  return res.json() as Promise<{
-    occurrences: Array<{
-      id: string;
-      category: string;
-      subtype: string;
-      severity: number;
-      status: string;
-      happenedAt: string;
-      student: { name: string };
-      createdBy: { name: string };
-      documentLink?: string;
-    }>;
-  }>;
+  if (!res.ok) throw new Error("Erro ao carregar ocorrências");
+  return res.json() as Promise<{ occurrences: OccurrenceRow[] }>;
 }
 
 export default function OccurrencesPage() {
@@ -62,8 +57,7 @@ export default function OccurrencesPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      happenedAt: new Date().toISOString().slice(0, 16),
-      documentLink: ""
+      happenedAt: new Date().toISOString().slice(0, 16)
     }
   });
 
@@ -72,24 +66,22 @@ export default function OccurrencesPage() {
 
   const onSubmit = async (values: FormData) => {
     setError(null);
-    const documentLink = values.documentLink?.trim();
     const response = await fetch("/api/occurrences", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...values,
-        documentLink: documentLink ? documentLink : undefined,
         happenedAt: new Date(values.happenedAt)
       })
     });
 
     if (!response.ok) {
       const payload = await response.json().catch(() => null);
-      setError(payload?.error ?? "Falha ao criar ocorrÃªncia");
+      setError(payload?.error ?? "Falha ao criar ocorrência");
       return;
     }
 
-    form.reset({ happenedAt: new Date().toISOString().slice(0, 16), documentLink: "" });
+    form.reset({ happenedAt: new Date().toISOString().slice(0, 16) });
     await queryClient.invalidateQueries({ queryKey: ["occurrences"] });
   };
 
@@ -98,7 +90,7 @@ export default function OccurrencesPage() {
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-700">Registrar ocorrÃªncia</h2>
+            <h2 className="text-lg font-semibold text-slate-700">Registrar ocorrência</h2>
             <p className="text-sm text-slate-500">
               Escolha o estudante/turma da lista (dados carregados automaticamente do cadastro base).
             </p>
@@ -118,13 +110,13 @@ export default function OccurrencesPage() {
               <option value="">Selecione um estudante</option>
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
-                  {student.name} â€¢ {student.registration}
+                  {student.name} • {student.registration}
                   {student.className ? ` (${student.className})` : ""}
                 </option>
               ))}
             </select>
             <span className="text-xs text-slate-400">
-              {reference.isLoading ? "Carregando alunos..." : `Total disponÃ­veis: ${students.length}`}
+              {reference.isLoading ? "Carregando alunos..." : `Total disponíveis: ${students.length}`}
             </span>
           </label>
           <label className="text-sm font-medium text-slate-600">
@@ -133,7 +125,7 @@ export default function OccurrencesPage() {
               <option value="">Selecione</option>
               {classes.map((cls) => (
                 <option key={cls.id} value={cls.id}>
-                  {cls.name} â€¢ {cls.grade ?? ""} {cls.shift ? `(${cls.shift})` : ""}
+                  {cls.name} • {cls.grade ?? ""} {cls.shift ? `(${cls.shift})` : ""}
                 </option>
               ))}
             </select>
@@ -144,9 +136,9 @@ export default function OccurrencesPage() {
               <option value="INDISCIPLINA">Indisciplina</option>
               <option value="ATRASO_FALTA">Atraso/Falta</option>
               <option value="CONFLITO">Conflito</option>
-              <option value="PEDAGOGICA">PedagÃ³gica</option>
-              <option value="PATRIMONIO">PatrimÃ´nio</option>
-              <option value="SAUDE_BEM_ESTAR">SaÃºde/Bem-estar</option>
+              <option value="PEDAGOGICA">Pedagógica</option>
+              <option value="PATRIMONIO">Patrimônio</option>
+              <option value="SAUDE_BEM_ESTAR">Saúde/Bem-estar</option>
             </select>
           </label>
           <label className="text-sm font-medium text-slate-600">
@@ -168,7 +160,7 @@ export default function OccurrencesPage() {
             />
           </label>
           <label className="text-sm font-medium text-slate-600">
-            Data/hora ocorrÃªncia
+            Data/hora ocorrência
             <input
               type="datetime-local"
               className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
@@ -176,25 +168,14 @@ export default function OccurrencesPage() {
             />
           </label>
           <label className="md:col-span-2 text-sm font-medium text-slate-600">
-            DescriÃ§Ã£o
+            Descrição
             <textarea className="mt-1 h-24 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("description")} />
           </label>
           <label className="md:col-span-2 text-sm font-medium text-slate-600">
-            AÃ§Ãµes adotadas
+            Ações adotadas
             <textarea className="mt-1 h-20 w-full rounded-xl border border-slate-300 px-3 py-2" {...form.register("actionsTaken")} />
           </label>
-          <label className="md:col-span-2 text-sm font-medium text-slate-600">
-            Link para documento (Google Docs/Sheets)
-            <input
-              type="url"
-              placeholder="https://docs.google.com/..."
-              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
-              {...form.register("documentLink")}
-            />
-            {form.formState.errors.documentLink && (
-              <p className="text-xs text-red-500">{form.formState.errors.documentLink.message}</p>
-            )}
-          </label>          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
             <input type="checkbox" {...form.register("isConfidential")} />
             Marcar como sigiloso
           </label>
@@ -203,7 +184,19 @@ export default function OccurrencesPage() {
       </Card>
 
       <Card>
-        <h2 className="text-lg font-semibold text-slate-700">OcorrÃªncias recentes</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-700">Ocorrências recentes</h2>
+          {SHEET_FALLBACK_URL && (
+            <a
+              href={SHEET_FALLBACK_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-semibold text-brand underline-offset-2 hover:underline"
+            >
+              Abrir planilha geral
+            </a>
+          )}
+        </div>
         {isLoading ? (
           <p className="mt-4 text-sm text-slate-500">Carregando...</p>
         ) : (
@@ -217,30 +210,34 @@ export default function OccurrencesPage() {
                   <th className="px-3 py-2 text-left">Gravidade</th>
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Registro</th>
-                  <th className="px-3 py-2 text-left">Documento</th>
+                  <th className="px-3 py-2 text-left">Planilha</th>
                 </tr>
               </thead>
               <tbody>
                 {data?.occurrences.map((item) => (
                   <tr key={item.id}>
                     <td className="px-3 py-2">{new Date(item.happenedAt).toLocaleString("pt-BR")}</td>
-                    <td className="px-3 py-2">{item.student?.name ?? "â€”"}</td>
+                    <td className="px-3 py-2">{item.student?.name ?? "-"}</td>
                     <td className="px-3 py-2">{item.category}</td>
                     <td className="px-3 py-2">{item.severity}</td>
                     <td className="px-3 py-2">{item.status}</td>
-                    <td className="px-3 py-2">{item.createdBy?.name ?? "â€”"}</td>
+                    <td className="px-3 py-2">{item.createdBy?.name ?? "-"}</td>
                     <td className="px-3 py-2">
-                      {item.documentLink ? (
+                      {item.sheetUrl ? (
                         <a
                           className="text-brand underline hover:text-blue-700"
-                          href={item.documentLink}
+                          href={item.sheetUrl}
                           target="_blank"
                           rel="noreferrer"
                         >
-                          Abrir no Google
+                          Abrir planilha
+                        </a>
+                      ) : SHEET_FALLBACK_URL ? (
+                        <a className="text-xs text-brand" href={SHEET_FALLBACK_URL} target="_blank" rel="noreferrer">
+                          Ver geral
                         </a>
                       ) : (
-                        <span className="text-xs text-slate-400">-</span>
+                        <span className="text-xs text-slate-400">—</span>
                       )}
                     </td>
                   </tr>
@@ -253,10 +250,3 @@ export default function OccurrencesPage() {
     </div>
   );
 }
-
-
-
-
-
-
-

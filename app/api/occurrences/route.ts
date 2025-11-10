@@ -4,6 +4,7 @@ import { requireUser, jsonOk, jsonError } from "@/lib/api";
 import { OCCURRENCE_CATEGORY, USER_ROLE, type OccurrenceStatus } from "@/constants/enums";
 import { z } from "zod";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { appendOccurrenceToSheet } from "@/lib/googleSheets";
 
 const createSchema = z.object({
   studentId: z.string().min(1),
@@ -14,8 +15,7 @@ const createSchema = z.object({
   description: z.string().min(5),
   actionsTaken: z.string().optional(),
   happenedAt: z.coerce.date(),
-  isConfidential: z.boolean().optional(),
-  documentLink: z.string().url().optional()
+  isConfidential: z.boolean().optional()
 });
 
 export async function GET(req: NextRequest) {
@@ -43,18 +43,18 @@ export async function GET(req: NextRequest) {
 
   const normalized = occurrences.map((occurrence) => {
     const { metadata, ...rest } = occurrence;
-    let documentLink: string | undefined;
+    let sheetUrl: string | undefined;
     if (metadata) {
       try {
         const parsed = JSON.parse(metadata);
-        if (parsed && typeof parsed.documentLink === "string") {
-          documentLink = parsed.documentLink;
+        if (parsed && typeof parsed.sheetUrl === "string") {
+          sheetUrl = parsed.sheetUrl;
         }
       } catch {
-        documentLink = undefined;
+        sheetUrl = undefined;
       }
     }
-    return { ...rest, documentLink };
+    return { ...rest, sheetUrl };
   });
 
   return jsonOk({ occurrences: normalized });
@@ -95,10 +95,36 @@ export async function POST(req: NextRequest) {
       description: data.description,
       actionsTaken: data.actionsTaken,
       happenedAt: data.happenedAt,
-      isConfidential: data.isConfidential ?? false,
-      metadata: data.documentLink ? JSON.stringify({ documentLink: data.documentLink }) : null
+      isConfidential: data.isConfidential ?? false
+    },
+    include: {
+      student: { select: { name: true } },
+      class: { select: { name: true } },
+      createdBy: { select: { name: true } }
     }
   });
+
+  const sheetRow = [
+    new Date(data.happenedAt).toLocaleString("pt-BR"),
+    occurrence.student?.name ?? "",
+    occurrence.class?.name ?? "",
+    data.category,
+    data.subtype,
+    String(data.severity),
+    data.description,
+    data.actionsTaken ?? "",
+    occurrence.createdBy?.name ?? "",
+    occurrence.id
+  ];
+
+  const sheetResult = await appendOccurrenceToSheet(sheetRow).catch(() => null);
+
+  if (sheetResult?.sheetUrl) {
+    await prisma.occurrence.update({
+      where: { id: occurrence.id },
+      data: { metadata: JSON.stringify({ sheetUrl: sheetResult.sheetUrl }) }
+    });
+  }
 
   await prisma.auditLog.create({
     data: {
