@@ -14,7 +14,8 @@ const createSchema = z.object({
   description: z.string().min(5),
   actionsTaken: z.string().optional(),
   happenedAt: z.coerce.date(),
-  isConfidential: z.boolean().optional()
+  isConfidential: z.boolean().optional(),
+  documentLink: z.string().url().optional()
 });
 
 export async function GET(req: NextRequest) {
@@ -40,7 +41,23 @@ export async function GET(req: NextRequest) {
     take: 200
   });
 
-  return jsonOk({ occurrences });
+  const normalized = occurrences.map((occurrence) => {
+    const { metadata, ...rest } = occurrence;
+    let documentLink: string | undefined;
+    if (metadata) {
+      try {
+        const parsed = JSON.parse(metadata);
+        if (parsed && typeof parsed.documentLink === "string") {
+          documentLink = parsed.documentLink;
+        }
+      } catch {
+        documentLink = undefined;
+      }
+    }
+    return { ...rest, documentLink };
+  });
+
+  return jsonOk({ occurrences: normalized });
 }
 
 export async function POST(req: NextRequest) {
@@ -78,7 +95,8 @@ export async function POST(req: NextRequest) {
       description: data.description,
       actionsTaken: data.actionsTaken,
       happenedAt: data.happenedAt,
-      isConfidential: data.isConfidential ?? false
+      isConfidential: data.isConfidential ?? false,
+      metadata: data.documentLink ? JSON.stringify({ documentLink: data.documentLink }) : null
     }
   });
 
